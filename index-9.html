@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>نادي السباحة — إدارة السباحين</title>
+<meta name="description" content="swimming_club_v4">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="shortcut icon" type="image/png" href="icon-192.png">
+<meta name="theme-color" content="#7c3aed">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="نادي السباحة">
+<style>
+:root{
+  --primary:#7c3aed; --primary-dark:#5b21b6; --primary-light:#ede9fe;
+  --bg:#f7f6fb; --card:#ffffff; --text:#1f2233; --muted:#6b7280;
+  --line:#e7e4f2; --green:#16a34a; --green-bg:#dcfce7;
+  --red:#dc2626; --red-bg:#fee2e2; --amber:#d97706; --amber-bg:#fef3c7;
+  --radius:16px;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,Arial,sans-serif;
+  background:var(--bg); color:var(--text); padding-bottom:78px; min-height:100vh;
+}
+header.topbar{
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff; padding:18px 16px 22px; border-radius:0 0 22px 22px;
+  box-shadow:0 4px 14px rgba(124,58,237,.25);
+}
+header.topbar .row{display:flex; align-items:center; justify-content:space-between;}
+header.topbar h1{font-size:20px; font-weight:800; display:flex; align-items:center; gap:8px;}
+header.topbar p{font-size:12.5px; opacity:.9; margin-top:2px;}
+.bell{position:relative; background:rgba(255,255,255,.18); border:none; border-radius:50%; width:38px; height:38px; font-size:17px; color:#fff; cursor:pointer;}
+.bell .dot{position:absolute; top:-2px; left:-2px; background:#fbbf24; color:#4a2e00; font-size:10px; font-weight:800; border-radius:10px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 3px;}
+.stats-strip{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:14px;}
+.stat-pill{background:rgba(255,255,255,.14); border-radius:12px; padding:8px 4px; text-align:center;}
+.stat-pill b{display:block; font-size:17px;}
+.stat-pill span{font-size:10.5px; opacity:.9;}
+
+.tabs{display:flex; gap:4px; padding:10px 8px; overflow-x:auto; background:var(--card); position:sticky; top:0; z-index:20; border-bottom:1px solid var(--line);}
+.tab-btn{flex:1; min-width:64px; border:none; background:none; padding:8px 4px; border-radius:12px; font-size:11.5px; color:var(--muted); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; font-weight:600;}
+.tab-btn .ic{font-size:18px;}
+.tab-btn.active{background:var(--primary-light); color:var(--primary-dark);}
+
+main{padding:14px;}
+.view{display:none;}
+.view.active{display:block; animation:fade .2s ease;}
+@keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+
+.card{background:var(--card); border-radius:var(--radius); padding:14px; box-shadow:0 1px 3px rgba(20,10,50,.06); margin-bottom:12px; border:1px solid var(--line);}
+.search-box{display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:10px 12px; margin-bottom:10px;}
+.search-box input{border:none; outline:none; flex:1; font-size:14px; background:none; color:var(--text);}
+.chips{display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:6px;}
+.chip{white-space:nowrap; padding:7px 13px; border-radius:20px; border:1px solid var(--line); background:var(--card); font-size:12.5px; font-weight:600; color:var(--muted); cursor:pointer;}
+.chip.active{background:var(--primary); color:#fff; border-color:var(--primary);}
+
+.swimmer-card{display:flex; gap:12px; align-items:flex-start;}
+.avatar{width:46px; height:46px; border-radius:14px; background:var(--primary-light); color:var(--primary-dark); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px; flex-shrink:0;}
+.sw-info{flex:1; min-width:0;}
+.sw-info h3{font-size:15px; font-weight:800;}
+.sw-info .meta{font-size:12px; color:var(--muted); margin-top:2px;}
+.badges{display:flex; gap:5px; flex-wrap:wrap; margin-top:7px;}
+.badge{font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:8px;}
+.badge.pool{background:var(--primary-light); color:var(--primary-dark);}
+.badge.active{background:var(--green-bg); color:var(--green);}
+.badge.soon{background:var(--amber-bg); color:var(--amber);}
+.badge.expired{background:var(--red-bg); color:var(--red);}
+.sw-actions{display:flex; flex-direction:column; gap:6px;}
+.icon-btn{width:34px; height:34px; border-radius:10px; border:1px solid var(--line); background:#fbfaff; font-size:15px; cursor:pointer;}
+.icon-btn.warn{background:var(--red-bg); border-color:var(--red-bg); color:var(--red); font-size:11px; font-weight:800;}
+.qatt-btn{width:100%; margin-top:10px; padding:11px; border-radius:11px; border:1.5px solid var(--line); background:#fbfaff; font-size:13.5px; font-weight:800; cursor:pointer; color:var(--primary-dark);}
+.qatt-btn.present{background:var(--green-bg); color:var(--green); border-color:var(--green);}
+.qatt-btn.absent{background:var(--red-bg); color:var(--red); border-color:var(--red);}
+
+.fab{position:fixed; bottom:82px; left:16px; width:54px; height:54px; border-radius:50%; background:var(--primary); color:#fff; border:none; font-size:26px; box-shadow:0 6px 16px rgba(124,58,237,.4); cursor:pointer; z-index:30;}
+.bottomnav{position:fixed; bottom:0; right:0; left:0; background:var(--card); border-top:1px solid var(--line); display:flex; z-index:25; padding:6px 4px calc(env(safe-area-inset-bottom,0px) + 4px);}
+
+.select, select, input[type=text], input[type=tel], input[type=number], input[type=date], input[type=month], textarea{
+  width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:11px; font-size:14px; background:#fff; color:var(--text); font-family:inherit;
+}
+label.field{display:block; margin-bottom:12px;}
+label.field span{display:block; font-size:12.5px; font-weight:700; color:var(--muted); margin-bottom:5px;}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.section-title{font-size:14px; font-weight:800; margin:16px 0 8px; color:var(--primary-dark); display:flex; align-items:center; gap:6px;}
+.pool-pick{border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:8px;}
+.pool-pick .ph{display:flex; align-items:center; justify-content:between; gap:8px;}
+.pool-pick label{display:flex; align-items:center; gap:8px; font-weight:700; font-size:13.5px; flex:1;}
+.group-opts{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+.group-opt{padding:6px 10px; border-radius:9px; border:1px solid var(--line); font-size:12px; cursor:pointer; background:#fbfaff;}
+.group-opt.sel{background:var(--primary); color:#fff; border-color:var(--primary);}
+
+.btn{display:block; width:100%; text-align:center; padding:13px; border-radius:12px; border:none; font-size:14.5px; font-weight:800; cursor:pointer;}
+.btn-primary{background:var(--primary); color:#fff;}
+.btn-ghost{background:#fff; color:var(--muted); border:1px solid var(--line); margin-top:8px;}
+
+.modal-overlay{position:fixed; inset:0; background:rgba(20,10,40,.45); z-index:50; display:none; align-items:flex-end;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--card); width:100%; max-height:90vh; overflow-y:auto; border-radius:20px 20px 0 0; padding:18px; animation:slideup .25s ease;}
+@keyframes slideup{from{transform:translateY(30px); opacity:0;} to{transform:none; opacity:1;}}
+.modal h2{font-size:17px; font-weight:800; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;}
+.modal h2 button{background:none; border:none; font-size:20px; color:var(--muted); cursor:pointer;}
+
+.att-controls{display:flex; flex-direction:column; gap:8px; margin-bottom:12px;}
+.att-summary{display:flex; gap:8px; margin-bottom:12px;}
+.att-summary div{flex:1; text-align:center; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:8px;}
+.att-summary b{display:block; font-size:16px;}
+.att-summary span{font-size:11px; color:var(--muted);}
+.att-table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:14px; background:#fff;}
+table.att{border-collapse:collapse; width:100%; font-size:12.5px;}
+table.att th, table.att td{padding:8px 6px; text-align:center; border-bottom:1px solid var(--line); white-space:nowrap;}
+table.att th{background:var(--primary-light); color:var(--primary-dark); font-weight:800; position:sticky; top:0;}
+table.att td.name{text-align:right; font-weight:700; position:sticky; right:0; background:#fff; min-width:110px;}
+.att-pay{display:block; font-size:10px; font-weight:700; margin-top:2px;}
+.att-cell{width:34px; height:34px; border-radius:9px; border:1px solid var(--line); cursor:pointer; font-size:14px; font-weight:800; background:#fbfaff;}
+.att-cell.present{background:var(--green-bg); color:var(--green); border-color:var(--green-bg);}
+.att-cell.absent{background:var(--red-bg); color:var(--red); border-color:var(--red-bg);}
+
+.report-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+.report-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; text-align:center;}
+.report-card b{display:block; font-size:22px;}
+.report-card span{font-size:11.5px; color:var(--muted);}
+.bar-row{display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12.5px;}
+.bar-row .lbl{width:80px; flex-shrink:0; font-weight:700;}
+.bar-track{flex:1; background:var(--primary-light); border-radius:8px; height:10px; overflow:hidden;}
+.bar-fill{background:var(--primary); height:100%; border-radius:8px;}
+.bar-row .num{width:22px; text-align:left; font-weight:700;}
+
+.install-steps{display:flex; flex-direction:column; gap:10px;}
+.istep{display:flex; gap:10px; align-items:flex-start;}
+.istep .n{width:26px; height:26px; border-radius:50%; background:var(--primary); color:#fff; font-weight:800; font-size:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.istep p{font-size:13.5px; line-height:1.5;}
+.warn-list{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+.warn-item{display:flex; gap:8px; font-size:12.5px; background:var(--amber-bg); padding:9px 10px; border-radius:10px; align-items:flex-start;}
+
+.empty{text-align:center; padding:36px 10px; color:var(--muted);}
+.empty .e{font-size:38px; margin-bottom:8px;}
+
+.notif-panel{position:fixed; top:64px; left:12px; right:12px; background:var(--card); border-radius:16px; box-shadow:0 10px 30px rgba(20,10,50,.25); z-index:60; display:none; max-height:70vh; overflow-y:auto; border:1px solid var(--line);}
+.notif-panel.open{display:block;}
+.notif-panel .np-h{display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-bottom:1px solid var(--line); font-weight:800;}
+.notif-item{padding:10px 14px; border-bottom:1px solid var(--line); font-size:12.5px;}
+.notif-item b{display:block; font-size:13.5px;}
+
+.mini-att-label{font-size:10.5px; color:var(--muted); font-weight:700; margin-top:10px; margin-bottom:5px;}
+.mini-att-strip{display:flex; gap:5px; flex-wrap:wrap;}
+.mini-att-cell{width:32px; height:32px; border-radius:9px; border:1px solid var(--line); background:#fbfaff; font-size:12px; font-weight:800; color:var(--muted); cursor:pointer;}
+.mini-att-cell.present{background:var(--green-bg); color:var(--green); border-color:var(--green-bg);}
+.mini-att-cell.absent{background:var(--red-bg); color:var(--red); border-color:var(--red-bg);}
+.mini-att-cell.future{opacity:.4; cursor:default;}
+
+#qrCodeBox{display:flex; justify-content:center; align-items:center; margin:16px 0; min-height:190px;}
+#qrCodeBox img, #qrCodeBox canvas{border-radius:12px; border:1px solid var(--line); padding:8px; background:#fff;}
+
+.scan-frame{position:relative; border-radius:14px; overflow:hidden; background:#000; aspect-ratio:1/1;}
+.scan-frame video{width:100%; height:100%; object-fit:cover; display:block;}
+.scan-frame::after{content:''; position:absolute; inset:14%; border:3px solid rgba(124,58,237,.85); border-radius:16px; pointer-events:none;}
+#scanStatus{margin-top:12px; font-size:13.5px; font-weight:800; min-height:20px; text-align:center;}
+.scan-result-card{display:none; margin-top:12px; background:#fbfaff; border:1.5px solid var(--line); border-radius:14px; padding:14px;}
+.scan-result-card.show{display:block; animation:fade .2s ease;}
+.scan-result-card .sr-name{font-size:16px; font-weight:800; margin-bottom:8px; text-align:center;}
+.scan-result-card .sr-row{display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-top:1px dashed var(--line); font-size:13px;}
+.scan-result-card .sr-row:first-of-type{border-top:none;}
+.scan-result-card .sr-row .k{color:var(--muted); font-weight:700;}
+.scan-result-card .sr-row .v{font-weight:800;}
+.scan-result-card .sr-row .v.ok{color:var(--green);}
+.scan-result-card .sr-row .v.warn{color:var(--amber);}
+.scan-result-card .sr-row .v.bad{color:var(--red);}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="row">
+    <div>
+      <h1>🏊 نادي السباحة</h1>
+      <p>إدارة السباحين — 4 إلى 14 سنة</p>
+    </div>
+    <button class="bell" id="bellBtn">🔔<span class="dot" id="bellDot" style="display:none">0</span></button>
+  </div>
+  <div class="stats-strip">
+    <div class="stat-pill"><b id="statTotal">0</b><span>سباح</span></div>
+    <div class="stat-pill"><b id="statActive">0</b><span>نشط</span></div>
+    <div class="stat-pill"><b id="statSoon">0</b><span>ينتهي قريباً</span></div>
+    <div class="stat-pill"><b id="statToday">0</b><span>اليوم</span></div>
+  </div>
+</header>
+
+<div class="notif-panel" id="notifPanel">
+  <div class="np-h"><span>🔔 التنبيهات</span><button class="icon-btn" onclick="closeNotif()">✕</button></div>
+  <div id="notifList"></div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="swimmers"><span class="ic">🏊</span>السباحون</button>
+  <button class="tab-btn" data-tab="attendance"><span class="ic">✅</span>الحضور</button>
+  <button class="tab-btn" data-tab="schedule"><span class="ic">📅</span>الجدول</button>
+  <button class="tab-btn" data-tab="reports"><span class="ic">📊</span>تقارير</button>
+  <button class="tab-btn" data-tab="settings"><span class="ic">⚙️</span>الإعدادات</button>
+  <button class="tab-btn" data-tab="install"><span class="ic">📲</span>تثبيت</button>
+</div>
+
+<main>
+
+  <!-- SWIMMERS -->
+  <section class="view active" id="view-swimmers">
+    <div class="search-box">🔍<input id="searchInput" placeholder="ابحث عن سباح..."><button class="icon-btn" title="مسح QR لتسجيل الحضور" style="flex-shrink:0;" onclick="openScanModal()">📷</button></div>
+    <div class="chips" id="statusChips">
+      <div class="chip active" data-filter="all">الكل</div>
+      <div class="chip" data-filter="active">✅ نشط</div>
+      <div class="chip" data-filter="soon">⚠️ ينتهي قريباً</div>
+      <div class="chip" data-filter="expired">❌ منتهي</div>
+    </div>
+    <div class="chips" id="poolChips"></div>
+    <div id="swimmersList"></div>
+  </section>
+
+  <!-- ATTENDANCE -->
+  <section class="view" id="view-attendance">
+    <div class="card">
+      <div class="att-controls">
+        <label class="field"><span>🏊 اختر المسبح</span>
+          <select id="attPool"><option value="">-- اختر المسبح --</option></select>
+        </label>
+        <label class="field"><span>👥 اختر الفوج</span>
+          <select id="attGroup" disabled><option value="">-- اختر الفوج --</option></select>
+        </label>
+        <label class="field"><span>📅 اختر الشهر</span>
+          <input type="month" id="attMonth">
+        </label>
+      </div>
+      <button class="btn btn-primary" onclick="openScanModal()">📷 مسح QR لتسجيل الحضور</button>
+    </div>
+    <div class="search-box">🔍<input id="attSearchInput" placeholder="ابحث عن سباح في هذا الفوج..."></div>
+    <div id="attendanceArea"></div>
+  </section>
+
+  <!-- SCHEDULE -->
+  <section class="view" id="view-schedule">
+    <div id="scheduleArea"></div>
+  </section>
+
+  <!-- REPORTS -->
+  <section class="view" id="view-reports">
+    <div id="reportsArea"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="view" id="view-settings">
+    <div class="card">
+      <div class="section-title" style="margin-top:0;">⚙️ إدارة المسابح والأفواج</div>
+      <p style="font-size:12.5px; color:var(--muted);">أضف أو عدّل أو احذف أي مسبح أو فوج (اليوم والتوقيت) حسب الحاجة.</p>
+    </div>
+    <div id="settingsArea"></div>
+    <button class="btn btn-primary" onclick="addPool()">➕ إضافة مسبح جديد</button>
+  </section>
+
+  <!-- INSTALL -->
+  <section class="view" id="view-install">
+    <div class="card">
+      <h2 style="font-size:16px; margin-bottom:12px;">📲 كيفية تثبيت التطبيق على هاتفك</h2>
+      <div class="install-steps">
+        <div class="istep"><div class="n">1</div><p>افتح الرابط <b>مباشرة</b> في متصفح <b>Chrome</b> (أندرويد) أو <b>Safari</b> (آيفون).</p></div>
+        <div class="istep"><div class="n">2</div><p>اضغط على النقاط الثلاث <b>⋮</b> (أندرويد) أو زر المشاركة <b>⬆️</b> (آيفون).</p></div>
+        <div class="istep"><div class="n">3</div><p>اختر <b>"إضافة إلى الشاشة الرئيسية"</b> / <b>"Add to Home Screen"</b>.</p></div>
+        <div class="istep"><div class="n">4</div><p>اضغط <b>"إضافة"</b> ✅ — ستظهر أيقونة التطبيق على شاشتك وتعمل بدون إنترنت!</p></div>
+      </div>
+      <div class="section-title">⚠️ تنبيهات مهمة</div>
+      <div class="warn-list">
+        <div class="warn-item">🔄 <span><b>البيانات متزامنة بين كل الهواتف</b> — أي تعديل يظهر عند الجميع فور توفر الإنترنت.</span></div>
+        <div class="warn-item">🌐 <span><b>يعمل بدون إنترنت أيضاً</b> — تقدر تشوف وتعدّل بدون نت، والتعديلات تتزامن تلقائياً عند رجوع الاتصال.</span></div>
+        <div class="warn-item">🔒 <span><b>لا تمسح بيانات المتصفح بالكامل</b> — هذا قد يمسح النسخة المخزنة محلياً للعمل بدون نت.</span></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<button class="fab" id="fabAdd">➕</button>
+
+<div class="bottomnav">
+  <button class="tab-btn active" data-tab="swimmers"><span class="ic">🏊</span>السباحون</button>
+  <button class="tab-btn" data-tab="attendance"><span class="ic">✅</span>الحضور</button>
+  <button class="tab-btn" data-tab="schedule"><span class="ic">📅</span>الجدول</button>
+  <button class="tab-btn" data-tab="reports"><span class="ic">📊</span>تقارير</button>
+  <button class="tab-btn" data-tab="settings"><span class="ic">⚙️</span>الإعدادات</button>
+  <button class="tab-btn" data-tab="install"><span class="ic">📲</span>تثبيت</button>
+</div>
+
+<!-- ADD/EDIT SWIMMER MODAL -->
+<div class="modal-overlay" id="swimmerModalOverlay">
+  <div class="modal">
+    <h2><span id="modalTitle">🏊 إضافة سباح جديد</span><button onclick="closeSwimmerModal()">✕</button></h2>
+    <div class="grid2">
+      <label class="field"><span>اللقب</span><input type="text" id="f_lastName"></label>
+      <label class="field"><span>الاسم</span><input type="text" id="f_firstName"></label>
+    </div>
+    <div class="grid2">
+      <label class="field"><span>تاريخ الميلاد</span><input type="date" id="f_dob"></label>
+      <label class="field"><span>الجنس</span>
+        <select id="f_gender"><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select>
+      </label>
+    </div>
+    <div class="grid2">
+      <label class="field"><span>اسم الولي</span><input type="text" id="f_guardianName"></label>
+      <label class="field"><span>هاتف الولي</span><input type="tel" id="f_guardianPhone"></label>
+    </div>
+
+    <div class="section-title">📋 نوع الاشتراك</div>
+    <div class="chips" id="subTypeChips">
+      <div class="chip active" data-sub="monthly">📅 شهري</div>
+      <div class="chip" data-sub="3months">📆 3 أشهر</div>
+      <div class="chip" data-sub="6months">🗓️ 6 أشهر</div>
+    </div>
+    <div class="grid2">
+      <label class="field"><span>تاريخ بداية الاشتراك</span><input type="date" id="f_startDate"></label>
+      <label class="field"><span>تاريخ نهاية الاشتراك</span><input type="date" id="f_endDate"></label>
+    </div>
+    <div class="grid2">
+      <label class="field"><span>💰 مبلغ الاشتراك (DA)</span><input type="number" id="f_amount"></label>
+      <label class="field"><span>✅ المبلغ المدفوع (DA)</span><input type="number" id="f_amountPaid"></label>
+    </div>
+    <label class="field"><span>🚫 الحد الأقصى للغيابات</span><input type="number" id="f_maxAbsences" placeholder="افتراضي: 3"></label>
+
+    <div class="section-title">🏊 المسابح المسجل بها</div>
+    <div id="poolPickArea"></div>
+
+    <label class="field"><span>ملاحظات</span><textarea id="f_notes" rows="2"></textarea></label>
+
+    <button class="btn btn-primary" onclick="saveSwimmer()">💾 حفظ</button>
+    <button class="btn btn-ghost" onclick="closeSwimmerModal()">إلغاء</button>
+  </div>
+</div>
+
+<!-- ADD/EDIT GROUP MODAL -->
+<div class="modal-overlay" id="groupModalOverlay">
+  <div class="modal">
+    <h2><span id="groupModalTitle">➕ إضافة فوج</span><button onclick="closeGroupModal()">✕</button></h2>
+    <label class="field"><span>📅 اليوم</span>
+      <select id="g_weekday">
+        <option value="0">الأحد</option>
+        <option value="1">الاثنين</option>
+        <option value="2">الثلاثاء</option>
+        <option value="3">الأربعاء</option>
+        <option value="4">الخميس</option>
+        <option value="5">الجمعة</option>
+        <option value="6">السبت</option>
+      </select>
+    </label>
+    <label class="field"><span>⏰ التوقيت</span>
+      <input type="time" id="g_time" value="10:00">
+    </label>
+    <button class="btn btn-primary" onclick="saveGroup()">💾 حفظ الفوج</button>
+    <button class="btn btn-ghost" onclick="closeGroupModal()">إلغاء</button>
+  </div>
+</div>
+
+<!-- QR CARD MODAL -->
+<div class="modal-overlay" id="qrModalOverlay">
+  <div class="modal" style="text-align:center;">
+    <h2><span>🪪 بطاقة السباح</span><button onclick="closeQrModal()">✕</button></h2>
+    <div id="qrCodeBox"></div>
+    <p id="qrSwimmerName" style="font-weight:800; font-size:15.5px; margin-bottom:4px;"></p>
+    <p style="font-size:12px; color:var(--muted); margin-bottom:14px;">اطبع هذه البطاقة وسلّمها للسباح — يكفي توجيه كاميرا الهاتف نحوها لتسجيل حضوره فوراً</p>
+    <button class="btn btn-primary" onclick="printQrCard()">🖨️ طباعة البطاقة</button>
+    <button class="btn btn-ghost" onclick="closeQrModal()">إغلاق</button>
+  </div>
+</div>
+
+<!-- QR SCAN MODAL -->
+<div class="modal-overlay" id="scanModalOverlay">
+  <div class="modal">
+    <h2><span>📷 مسح QR لتسجيل الحضور</span><button onclick="closeScanModal()">✕</button></h2>
+    <div class="scan-frame"><video id="scanVideo" playsinline muted></video></div>
+    <canvas id="scanCanvas" style="display:none;"></canvas>
+    <p id="scanStatus"></p>
+    <div class="scan-result-card" id="scanResultCard"></div>
+    <button class="btn btn-ghost" onclick="closeScanModal()">إغلاق</button>
+  </div>
+</div>
+
+<!-- MONTHLY HISTORY MODAL -->
+<div class="modal-overlay" id="historyModalOverlay">
+  <div class="modal">
+    <h2><span>📅 السجل الشهري</span><button onclick="closeHistoryModal()">✕</button></h2>
+    <p id="histSwimmerName" style="font-weight:800; font-size:15.5px; margin-bottom:10px;"></p>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:14px;">
+      <button class="icon-btn" onclick="historyChangeMonth(-1)">◀</button>
+      <div id="histMonthLabel" style="font-weight:800; font-size:16px;"></div>
+      <button class="icon-btn" onclick="historyChangeMonth(1)">▶</button>
+    </div>
+    <div class="grid2" style="margin-bottom:10px;">
+      <div class="field"><span>✅ حصص حضرها</span>
+        <div id="histPresentCount" style="font-weight:800; font-size:20px; padding:8px 0;">0</div>
+      </div>
+      <div class="field"><span>❌ حصص غاب عنها</span>
+        <div id="histAbsentCount" style="font-weight:800; font-size:20px; padding:8px 0;">0</div>
+      </div>
+    </div>
+    <div class="section-title">💰 مستحقات الشهر</div>
+    <div class="grid2">
+      <label class="field"><span>مبلغ الاشتراك (DA)</span><input type="number" id="hist_amount"></label>
+      <label class="field"><span>المبلغ المدفوع (DA)</span><input type="number" id="hist_paid"></label>
+    </div>
+    <p id="histRemaining" style="font-size:13px; font-weight:700; margin:4px 0 14px;"></p>
+    <button class="btn btn-primary" onclick="saveHistoryPayment()">💾 حفظ مستحقات هذا الشهر</button>
+    <button class="btn btn-ghost" onclick="closeHistoryModal()">إغلاق</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+/* ================= FIREBASE CONFIG =================
+   عدّل القيم بالأسفل بمعلومات مشروعك من Firebase Console
+   (Project settings → General → Your apps → SDK setup and configuration)
+*/
+const firebaseConfig = {
+  apiKey: "AIzaSyBhGnkAf-ihKE042sTex4aQwDuOU9L9DbI",
+  authDomain: "swim-cbn.firebaseapp.com",
+  projectId: "swim-cbn",
+  storageBucket: "swim-cbn.firebasestorage.app",
+  messagingSenderId: "1031089524756",
+  appId: "1:1031089524756:web:23ac2c9a53182f9de29701"
+};
+let firebaseReady = false;
+let db = null;
+try{
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+  firebaseReady = true;
+}catch(e){ console.error('Firebase init failed', e); }
+const DOC_REF = firebaseReady ? db.collection('swimClub').doc('mainData') : null;
+
+/* ================= CONFIG ================= */
+const DEFAULT_POOLS = [
+  {id:'taraqqi', name:'مسبح الترقي', groups:[
+    {id:'mon-1000', label:'الاثنين — 10:00 صباحاً', weekday:1, time:'10:00'}
+  ]},
+  {id:'alfares', name:'مسبح الفارس', groups:[
+    {id:'wed-1030', label:'الأربعاء — 10:30 صباحاً', weekday:3, time:'10:30'},
+    {id:'thu-1000', label:'الخميس — 10:00 صباحاً', weekday:4, time:'10:00'},
+    {id:'thu-1200', label:'الخميس — 12:00 صباحاً', weekday:4, time:'12:00'},
+    {id:'fri-1000', label:'الجمعة — 10:00 صباحاً', weekday:5, time:'10:00'}
+  ]},
+  {id:'deepnautic', name:'ديب نوتيك', groups:[
+    {id:'tue-1730', label:'الثلاثاء — 17:30 مساءً', weekday:2, time:'17:30'}
+  ]},
+  {id:'aout20', name:'20 أوت', groups:[
+    {id:'sun-1930', label:'الأحد — 19:30 مساءً', weekday:0, time:'19:30'}
+  ]}
+];
+const WEEKDAYS = [
+  {v:0,n:'الأحد'},{v:1,n:'الاثنين'},{v:2,n:'الثلاثاء'},{v:3,n:'الأربعاء'},{v:4,n:'الخميس'},{v:5,n:'الجمعة'},{v:6,n:'السبت'}
+];
+function formatGroupLabel(weekday, time){
+  const day = WEEKDAYS.find(w=>w.v===Number(weekday)).n;
+  const [h,m] = (time||'10:00').split(':').map(Number);
+  const suffix = h<12 ? 'صباحاً' : 'مساءً';
+  const hh = String(h).padStart(2,'0'), mm = String(m).padStart(2,'0');
+  return `${day} — ${hh}:${mm} ${suffix}`;
+}
+function poolById(id){ return DATA.pools.find(p=>p.id===id); }
+function groupById(poolId, groupId){ const p=poolById(poolId); return p ? p.groups.find(g=>g.id===groupId) : null; }
+
+/* ================= STATE ================= */
+let DATA = { swimmers: [], attendance: {}, pools: JSON.parse(JSON.stringify(DEFAULT_POOLS)), monthlyPayments: {} };
+
+function saveData(){
+  if(!DATA.pools || !DATA.pools.length) DATA.pools = JSON.parse(JSON.stringify(DEFAULT_POOLS));
+  if(!DATA.monthlyPayments) DATA.monthlyPayments = {};
+  if(!firebaseReady){ localStorage.setItem('swimClubData_v2', JSON.stringify(DATA)); return; }
+  DOC_REF.set({ swimmers: DATA.swimmers, attendance: DATA.attendance, pools: DATA.pools, monthlyPayments: DATA.monthlyPayments })
+    .catch(err=>console.error('Firestore save error', err));
+}
+
+function startDataSync(){
+  if(!firebaseReady){
+    try{
+      const raw = localStorage.getItem('swimClubData_v2');
+      if(raw) DATA = JSON.parse(raw);
+      if(!DATA.monthlyPayments) DATA.monthlyPayments = {};
+    }catch(e){ console.error(e); }
+    initAttendanceControls();
+    renderAll();
+    return;
+  }
+  DOC_REF.onSnapshot(snap=>{
+    if(snap.exists){
+      const remote = snap.data();
+      DATA.swimmers = remote.swimmers || [];
+      DATA.attendance = remote.attendance || {};
+      DATA.pools = (remote.pools && remote.pools.length) ? remote.pools : JSON.parse(JSON.stringify(DEFAULT_POOLS));
+      DATA.monthlyPayments = remote.monthlyPayments || {};
+    } else {
+      DATA.pools = JSON.parse(JSON.stringify(DEFAULT_POOLS));
+      saveData();
+    }
+    refreshAttPoolOptions();
+    renderAll();
+  }, err=>{
+    console.error('Firestore sync error', err);
+    refreshAttPoolOptions();
+    renderAll();
+  });
+}
+
+
+let editingId = null;
+let selectedPoolsInModal = []; // [{poolId, groupId}]
+let currentStatusFilter = 'all';
+let currentPoolFilter = 'all';
+
+/* ================= HELPERS ================= */
+function uid(){ return 'sw_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+function todayStr(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
+function ageFromDob(dob){
+  if(!dob) return '-';
+  const d=new Date(dob), n=new Date();
+  let age = n.getFullYear()-d.getFullYear();
+  const m = n.getMonth()-d.getMonth();
+  if(m<0 || (m===0 && n.getDate()<d.getDate())) age--;
+  return age;
+}
+function subStatus(sw){
+  if(!sw.endDate) return 'active';
+  const diff = daysBetween(todayStr(), sw.endDate);
+  if(diff < 0) return 'expired';
+  if(diff <= 7) return 'soon';
+  return 'active';
+}
+function statusLabel(s){ return s==='active' ? '✅ نشط' : s==='soon' ? '⚠️ ينتهي قريباً' : '❌ منتهي'; }
+function statusClass(s){ return s==='active' ? 'active' : s==='soon' ? 'soon' : 'expired'; }
+
+function paymentInfo(sw){
+  const total = parseFloat(sw.amount) || 0;
+  const paid = parseFloat(sw.amountPaid) || 0;
+  const remaining = Math.max(0, total - paid);
+  let status = 'none';
+  if(total>0){
+    if(remaining<=0) status = 'full';
+    else if(paid>0) status = 'partial';
+    else status = 'unpaid';
+  }
+  return { total, paid, remaining, status };
+}
+function paymentBadgeHtml(sw){
+  const p = paymentInfo(sw);
+  if(p.total<=0) return '';
+  if(p.status==='full') return `<span class="badge active">💰 مدفوع بالكامل</span>`;
+  if(p.status==='partial') return `<span class="badge soon">💰 متبقي ${p.remaining} DA</span>`;
+  return `<span class="badge expired">💰 لم يُدفع (${p.total} DA)</span>`;
+}
+
+function absenceCount(sw){
+  let c = 0;
+  for(const key in DATA.attendance){
+    if(DATA.attendance[key][sw.id] === 'absent') c++;
+  }
+  return c;
+}
+function presentCountToday(){
+  let c=0;
+  const t = todayStr();
+  for(const key in DATA.attendance){
+    if(!key.endsWith('|'+t)) continue;
+    const rec = DATA.attendance[key];
+    for(const swId in rec){ if(rec[swId]==='present') c++; }
+  }
+  return c;
+}
+
+/* ================= MONTHLY HISTORY (attendance + payments per month) ================= */
+const ARABIC_MONTHS = ['جانفي','فيفري','مارس','أفريل','ماي','جوان','جويلية','أوت','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+function ymNow(){ return todayStr().slice(0,7); }
+function ymLabel(ym){
+  const [y,m] = ym.split('-').map(Number);
+  return `${ARABIC_MONTHS[m-1]} ${y}`;
+}
+function monthlyAttendanceStats(swId, ym){
+  let present = 0, absent = 0;
+  for(const key in DATA.attendance){
+    const date = key.split('|')[2];
+    if(!date || !date.startsWith(ym)) continue;
+    const st = DATA.attendance[key][swId];
+    if(st === 'present') present++;
+    else if(st === 'absent') absent++;
+  }
+  return { present, absent };
+}
+function getMonthlyPayment(swId, ym){
+  const rec = (DATA.monthlyPayments[swId] || {})[ym];
+  if(rec) return { amount: rec.amount||0, paid: rec.paid||0 };
+  const sw = DATA.swimmers.find(s=>s.id===swId);
+  const amount = sw ? (parseFloat(sw.amount) || 0) : 0;
+  // للشهر الحالي فقط: إن لم يوجد سجل بعد، نستعمل المبلغ المدفوع الحالي من ملف السباح كقيمة أولية
+  const paid = (sw && ym === ymNow()) ? (parseFloat(sw.amountPaid) || 0) : 0;
+  return { amount, paid };
+}
+function setMonthlyPayment(swId, ym, amount, paid){
+  if(!DATA.monthlyPayments[swId]) DATA.monthlyPayments[swId] = {};
+  DATA.monthlyPayments[swId][ym] = { amount: parseFloat(amount)||0, paid: parseFloat(paid)||0 };
+  // إبقاء بيانات بطاقة السباح (المستخدمة في القوائم والشارات) متوافقة مع الشهر الحالي
+  if(ym === ymNow()){
+    const sw = DATA.swimmers.find(s=>s.id===swId);
+    if(sw){ sw.amount = amount; sw.amountPaid = paid; }
+  }
+  saveData();
+}
+
+let historySwimmerId = null;
+let historyYm = ymNow();
+function openHistoryModal(swId){
+  historySwimmerId = swId;
+  historyYm = ymNow();
+  renderHistoryModal();
+  document.getElementById('historyModalOverlay').classList.add('open');
+}
+function closeHistoryModal(){
+  document.getElementById('historyModalOverlay').classList.remove('open');
+  historySwimmerId = null;
+}
+function historyChangeMonth(delta){
+  const [y,m] = historyYm.split('-').map(Number);
+  const d = new Date(y, m-1+delta, 1);
+  historyYm = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  renderHistoryModal();
+}
+function renderHistoryModal(){
+  const sw = DATA.swimmers.find(s=>s.id===historySwimmerId);
+  if(!sw) return;
+  document.getElementById('histSwimmerName').textContent = `${sw.lastName||''} ${sw.firstName||''}`;
+  document.getElementById('histMonthLabel').textContent = ymLabel(historyYm);
+  const stats = monthlyAttendanceStats(sw.id, historyYm);
+  document.getElementById('histPresentCount').textContent = stats.present;
+  document.getElementById('histAbsentCount').textContent = stats.absent;
+  const pay = getMonthlyPayment(sw.id, historyYm);
+  document.getElementById('hist_amount').value = pay.amount || '';
+  document.getElementById('hist_paid').value = pay.paid || '';
+  updateHistRemaining();
+}
+function updateHistRemaining(){
+  const amount = parseFloat(document.getElementById('hist_amount').value) || 0;
+  const paid = parseFloat(document.getElementById('hist_paid').value) || 0;
+  const remaining = Math.max(0, amount - paid);
+  const el = document.getElementById('histRemaining');
+  if(amount<=0){ el.textContent = ''; return; }
+  if(remaining<=0){ el.style.color = 'var(--green)'; el.textContent = '✅ مدفوع بالكامل'; }
+  else { el.style.color = 'var(--amber)'; el.textContent = `⚠️ متبقي ${remaining} DA`; }
+}
+document.getElementById('hist_amount').addEventListener('input', updateHistRemaining);
+document.getElementById('hist_paid').addEventListener('input', updateHistRemaining);
+function saveHistoryPayment(){
+  if(!historySwimmerId) return;
+  const amount = document.getElementById('hist_amount').value;
+  const paid = document.getElementById('hist_paid').value;
+  setMonthlyPayment(historySwimmerId, historyYm, amount, paid);
+  renderHistoryModal();
+  renderSwimmers(); renderStats();
+}
+
+/* ================= TABS ================= */
+function switchTab(tab){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab===tab);
+  });
+  if(tab==='schedule') renderSchedule();
+  if(tab==='reports') renderReports();
+  if(tab==='attendance') renderAttendanceArea();
+  if(tab==='settings') renderSettings();
+}
+document.querySelectorAll('.tab-btn').forEach(b=>{
+  b.addEventListener('click', ()=>switchTab(b.dataset.tab));
+});
+
+/* ================= SWIMMERS LIST ================= */
+function renderStats(){
+  document.getElementById('statTotal').textContent = DATA.swimmers.length;
+  document.getElementById('statActive').textContent = DATA.swimmers.filter(s=>subStatus(s)==='active').length;
+  document.getElementById('statSoon').textContent = DATA.swimmers.filter(s=>subStatus(s)==='soon').length;
+  document.getElementById('statToday').textContent = presentCountToday();
+
+  const soon = DATA.swimmers.filter(s=>subStatus(s)==='soon').length;
+  const overAbs = DATA.swimmers.filter(s=> absenceCount(s) >= (s.maxAbsences||3) ).length;
+  const total = soon+overAbs;
+  const dot = document.getElementById('bellDot');
+  if(total>0){ dot.style.display='flex'; dot.textContent=total; } else { dot.style.display='none'; }
+}
+
+function initial(sw){ return (sw.firstName||'؟').charAt(0); }
+
+/* ---- Quick attendance (from Swimmers tab) ---- */
+function enrollmentForToday(sw){
+  const wd = new Date().getDay();
+  const list = sw.enrollments || [];
+  if(!list.length) return null;
+  const match = list.find(e=>{ const g = groupById(e.poolId, e.groupId); return g && Number(g.weekday) === wd; });
+  return match || list[0];
+}
+function todayAttendanceStatus(sw){
+  const e = enrollmentForToday(sw);
+  if(!e) return { status: undefined, enrollment: null };
+  const key = `${e.poolId}|${e.groupId}|${todayStr()}`;
+  const status = DATA.attendance[key] && DATA.attendance[key][sw.id];
+  return { status, enrollment: e };
+}
+function quickToggleAttendance(swId){
+  const sw = DATA.swimmers.find(s=>s.id===swId);
+  if(!sw) return;
+  const e = enrollmentForToday(sw);
+  if(!e){ alert('هذا السباح غير مسجل في أي مسبح/فوج بعد. أضفه من زر التعديل ✏️ أولاً.'); return; }
+  cycleAttendance(e.poolId, e.groupId, todayStr(), swId);
+  renderSwimmers();
+}
+
+/* ---- Mini monthly attendance strip (Swimmers tab) ---- */
+function renderMiniAttStrip(sw){
+  const enrolled = (sw.enrollments||[])[0];
+  if(!enrolled) return '';
+  const g = groupById(enrolled.poolId, enrolled.groupId);
+  const p = poolById(enrolled.poolId);
+  if(!g || !p) return '';
+  const ym = todayStr().slice(0,7);
+  const dates = datesForMonthWeekday(ym, g.weekday);
+  if(!dates.length) return '';
+  const todayS = todayStr();
+  const cells = dates.map(d=>{
+    const key = `${enrolled.poolId}|${enrolled.groupId}|${d}`;
+    const st = DATA.attendance[key] && DATA.attendance[key][sw.id];
+    const day = Number(d.slice(8,10));
+    const isFuture = d > todayS;
+    const cls = st==='present' ? 'present' : st==='absent' ? 'absent' : '';
+    const symbol = st==='present' ? '✓' : st==='absent' ? '✗' : day;
+    return `<button class="mini-att-cell ${cls} ${isFuture?'future':''}" ${isFuture?'disabled':''} title="${day} — ${p.name.replace('مسبح ','')}" onclick="toggleMiniAtt('${enrolled.poolId}','${enrolled.groupId}','${d}','${sw.id}')">${symbol}</button>`;
+  }).join('');
+  return `<div class="mini-att-label">📅 حضور هذا الشهر — ${p.name.replace('مسبح ','')}</div><div class="mini-att-strip">${cells}</div>`;
+}
+function toggleMiniAtt(poolId, groupId, date, swId){
+  cycleAttendance(poolId, groupId, date, swId);
+  renderSwimmers();
+}
+
+function renderSwimmers(){
+  const q = document.getElementById('searchInput').value.trim();
+  let list = DATA.swimmers.slice();
+  if(currentStatusFilter!=='all') list = list.filter(s=>subStatus(s)===currentStatusFilter);
+  if(currentPoolFilter!=='all') list = list.filter(s=> (s.enrollments||[]).some(e=>e.poolId===currentPoolFilter));
+  if(q) list = list.filter(s=> (s.firstName+' '+s.lastName).includes(q) || (s.guardianPhone||'').includes(q));
+
+  const wrap = document.getElementById('swimmersList');
+  if(list.length===0){
+    wrap.innerHTML = '<div class="empty"><div class="e">🏊</div>لا يوجد سباحون مطابقون</div>';
+    return;
+  }
+  wrap.innerHTML = list.map(sw=>{
+    const st = subStatus(sw);
+    const abs = absenceCount(sw);
+    const maxA = sw.maxAbsences || 3;
+    const poolBadges = (sw.enrollments||[]).map(e=>{
+      const p = poolById(e.poolId), g = groupById(e.poolId,e.groupId);
+      return `<span class="badge pool">${p?p.name.replace('مسبح ',''):''}${g?' • '+g.label.split('—')[1].trim():''}</span>`;
+    }).join('');
+    const ta = todayAttendanceStatus(sw);
+    let qattCls = '', qattLabel = '✅ تسجيل الحضور اليوم';
+    if(ta.status==='present'){ qattCls='present'; qattLabel = '✅ حاضر اليوم — اضغط للتعديل'; }
+    else if(ta.status==='absent'){ qattCls='absent'; qattLabel = '❌ غائب اليوم — اضغط للتعديل'; }
+    else if(!ta.enrollment){ qattLabel = '⚠️ غير مسجل في فوج'; }
+    return `
+    <div class="card">
+      <div class="swimmer-card">
+        <div class="avatar">${initial(sw)}</div>
+        <div class="sw-info">
+          <h3>${sw.lastName||''} ${sw.firstName||''}</h3>
+          <div class="meta">${ageFromDob(sw.dob)} سنة • ${sw.guardianPhone||'بدون هاتف'}</div>
+          <div class="badges">
+            <span class="badge ${statusClass(st)}">${statusLabel(st)}</span>
+            ${abs>=maxA ? `<span class="badge expired">⚠️ غيابات ${abs}/${maxA}</span>` : `<span class="badge pool">غياب ${abs}/${maxA}</span>`}
+            ${paymentBadgeHtml(sw)}
+            ${poolBadges}
+          </div>
+        </div>
+        <div class="sw-actions">
+          <button class="icon-btn" title="تعديل" onclick="openSwimmerModal('${sw.id}')">✏️</button>
+          <button class="icon-btn" title="بطاقة QR" onclick="openSwimmerQR('${sw.id}')">🪪</button>
+          <button class="icon-btn" title="السجل الشهري" onclick="openHistoryModal('${sw.id}')">📅</button>
+          <button class="icon-btn warn" title="حذف" onclick="deleteSwimmer('${sw.id}')">حذف</button>
+        </div>
+      </div>
+      ${renderMiniAttStrip(sw)}
+      <button class="qatt-btn ${qattCls}" ${!ta.enrollment?'disabled':''} onclick="quickToggleAttendance('${sw.id}')">${qattLabel}</button>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('searchInput').addEventListener('input', renderSwimmers);
+document.querySelectorAll('#statusChips .chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    document.querySelectorAll('#statusChips .chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active'); currentStatusFilter = c.dataset.filter; renderSwimmers();
+  });
+});
+function renderPoolChips(){
+  const wrap = document.getElementById('poolChips');
+  wrap.innerHTML = `<div class="chip ${currentPoolFilter==='all'?'active':''}" data-pool="all">الكل</div>` +
+    DATA.pools.map(p=>`<div class="chip ${currentPoolFilter===p.id?'active':''}" data-pool="${p.id}">🏊 ${p.name.replace('مسبح ','')}</div>`).join('');
+  wrap.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      wrap.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));
+      c.classList.add('active'); currentPoolFilter = c.dataset.pool; renderSwimmers();
+    });
+  });
+}
+
+function deleteSwimmer(id){
+  if(!confirm('هل تريد حذف هذا السباح نهائياً؟')) return;
+  DATA.swimmers = DATA.swimmers.filter(s=>s.id!==id);
+  saveData(); renderAll();
+}
+
+/* ================= SWIMMER MODAL ================= */
+let subTypeSelected = 'monthly';
+
+function renderPoolPickArea(){
+  const area = document.getElementById('poolPickArea');
+  area.innerHTML = DATA.pools.map(p=>{
+    const enrolled = selectedPoolsInModal.find(e=>e.poolId===p.id);
+    const checked = !!enrolled;
+    const multiGroup = p.groups.length > 1;
+    return `
+    <div class="pool-pick">
+      <div class="ph">
+        <label>
+          <input type="checkbox" data-pool="${p.id}" ${checked?'checked':''} onchange="togglePoolPick('${p.id}', this.checked)">
+          🏊 ${p.name}
+        </label>
+      </div>
+      ${ (checked && multiGroup) ? `
+      <div class="group-opts">
+        ${p.groups.map(g=>`<div class="group-opt ${enrolled && enrolled.groupId===g.id ? 'sel':''}" onclick="pickGroup('${p.id}','${g.id}')">${g.label}</div>`).join('')}
+      </div>` : (checked ? `<div class="group-opts"><div class="group-opt sel">${p.groups[0].label}</div></div>` : '') }
+    </div>`;
+  }).join('');
+}
+function togglePoolPick(poolId, checked){
+  selectedPoolsInModal = selectedPoolsInModal.filter(e=>e.poolId!==poolId);
+  if(checked){
+    const p = poolById(poolId);
+    selectedPoolsInModal.push({poolId, groupId: p.groups[0].id});
+  }
+  renderPoolPickArea();
+}
+function pickGroup(poolId, groupId){
+  const e = selectedPoolsInModal.find(x=>x.poolId===poolId);
+  if(e) e.groupId = groupId;
+  renderPoolPickArea();
+}
+
+document.querySelectorAll('#subTypeChips .chip').forEach(c=>{
+  c.addEventListener('click', ()=>{
+    document.querySelectorAll('#subTypeChips .chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active'); subTypeSelected = c.dataset.sub;
+  });
+});
+
+function openSwimmerModal(id){
+  editingId = id || null;
+  const sw = id ? DATA.swimmers.find(s=>s.id===id) : null;
+  document.getElementById('modalTitle').textContent = sw ? '✏️ تعديل بيانات السباح' : '🏊 إضافة سباح جديد';
+  document.getElementById('f_lastName').value = sw?.lastName || '';
+  document.getElementById('f_firstName').value = sw?.firstName || '';
+  document.getElementById('f_dob').value = sw?.dob || '';
+  document.getElementById('f_gender').value = sw?.gender || 'ذكر';
+  document.getElementById('f_guardianName').value = sw?.guardianName || '';
+  document.getElementById('f_guardianPhone').value = sw?.guardianPhone || '';
+  document.getElementById('f_startDate').value = sw?.startDate || todayStr();
+  document.getElementById('f_endDate').value = sw?.endDate || '';
+  document.getElementById('f_amount').value = sw?.amount || '';
+  document.getElementById('f_amountPaid').value = sw?.amountPaid || '';
+  document.getElementById('f_maxAbsences').value = sw?.maxAbsences || '';
+  document.getElementById('f_notes').value = sw?.notes || '';
+  subTypeSelected = sw?.subType || 'monthly';
+  document.querySelectorAll('#subTypeChips .chip').forEach(x=>x.classList.toggle('active', x.dataset.sub===subTypeSelected));
+  selectedPoolsInModal = sw?.enrollments ? JSON.parse(JSON.stringify(sw.enrollments)) : [];
+  renderPoolPickArea();
+  document.getElementById('swimmerModalOverlay').classList.add('open');
+}
+function closeSwimmerModal(){
+  document.getElementById('swimmerModalOverlay').classList.remove('open');
+  editingId = null;
+}
+document.getElementById('fabAdd').addEventListener('click', ()=>openSwimmerModal(null));
+
+function saveSwimmer(){
+  const lastName = document.getElementById('f_lastName').value.trim();
+  const firstName = document.getElementById('f_firstName').value.trim();
+  if(!firstName){ alert('الرجاء إدخال اسم السباح'); return; }
+  const sw = {
+    id: editingId || uid(),
+    lastName, firstName,
+    dob: document.getElementById('f_dob').value,
+    gender: document.getElementById('f_gender').value,
+    guardianName: document.getElementById('f_guardianName').value.trim(),
+    guardianPhone: document.getElementById('f_guardianPhone').value.trim(),
+    subType: subTypeSelected,
+    startDate: document.getElementById('f_startDate').value,
+    endDate: document.getElementById('f_endDate').value,
+    amount: document.getElementById('f_amount').value,
+    amountPaid: document.getElementById('f_amountPaid').value,
+    maxAbsences: parseInt(document.getElementById('f_maxAbsences').value) || 3,
+    notes: document.getElementById('f_notes').value.trim(),
+    enrollments: selectedPoolsInModal.slice(),
+    createdAt: editingId ? (DATA.swimmers.find(s=>s.id===editingId)?.createdAt || Date.now()) : Date.now()
+  };
+  if(editingId){
+    const idx = DATA.swimmers.findIndex(s=>s.id===editingId);
+    DATA.swimmers[idx] = sw;
+  } else {
+    DATA.swimmers.push(sw);
+  }
+  saveData();
+  closeSwimmerModal();
+  renderAll();
+}
+
+/* ================= ATTENDANCE ================= */
+const attPoolSel = document.getElementById('attPool');
+const attGroupSel = document.getElementById('attGroup');
+const attMonthInp = document.getElementById('attMonth');
+
+function initAttendanceControls(){
+  attPoolSel.innerHTML = '<option value="">-- اختر المسبح --</option>' +
+    DATA.pools.map(p=>`<option value="${p.id}">🏊 ${p.name}</option>`).join('');
+  if(!attMonthInp.value){
+    const now = new Date();
+    attMonthInp.value = now.toISOString().slice(0,7);
+  }
+}
+function refreshAttPoolOptions(){
+  const prevPool = attPoolSel.value;
+  attPoolSel.innerHTML = '<option value="">-- اختر المسبح --</option>' +
+    DATA.pools.map(p=>`<option value="${p.id}">🏊 ${p.name}</option>`).join('');
+  if(DATA.pools.some(p=>p.id===prevPool)) attPoolSel.value = prevPool;
+  const p = poolById(attPoolSel.value);
+  const prevGroup = attGroupSel.value;
+  if(p){
+    attGroupSel.disabled = false;
+    attGroupSel.innerHTML = '<option value="">-- اختر الفوج --</option>' + p.groups.map(g=>`<option value="${g.id}">${g.label}</option>`).join('');
+    if(p.groups.some(g=>g.id===prevGroup)) attGroupSel.value = prevGroup;
+  } else {
+    attGroupSel.innerHTML = '<option value="">-- اختر الفوج --</option>';
+    attGroupSel.disabled = true;
+  }
+}
+attPoolSel.addEventListener('change', ()=>{
+  const p = poolById(attPoolSel.value);
+  if(!p){ attGroupSel.innerHTML='<option value="">-- اختر الفوج --</option>'; attGroupSel.disabled=true; renderAttendanceArea(); return; }
+  attGroupSel.disabled = false;
+  attGroupSel.innerHTML = '<option value="">-- اختر الفوج --</option>' + p.groups.map(g=>`<option value="${g.id}">${g.label}</option>`).join('');
+  document.getElementById('attSearchInput').value = '';
+  renderAttendanceArea();
+});
+attGroupSel.addEventListener('change', renderAttendanceArea);
+attMonthInp.addEventListener('change', renderAttendanceArea);
+const attSearchInp = document.getElementById('attSearchInput');
+attSearchInp.addEventListener('input', renderAttendanceArea);
+
+function datesForMonthWeekday(yearMonth, weekday){
+  const [y,m] = yearMonth.split('-').map(Number);
+  const dates = [];
+  const daysInMonth = new Date(y, m, 0).getDate();
+  for(let d=1; d<=daysInMonth; d++){
+    const dt = new Date(y, m-1, d);
+    if(dt.getDay() === weekday){
+      dates.push(dt.toISOString().slice(0,10));
+    }
+  }
+  return dates;
+}
+const WD_SHORT = ['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+
+function cycleAttendance(poolId, groupId, date, swimmerId){
+  const key = `${poolId}|${groupId}|${date}`;
+  if(!DATA.attendance[key]) DATA.attendance[key] = {};
+  const cur = DATA.attendance[key][swimmerId];
+  const next = cur === undefined ? 'present' : cur === 'present' ? 'absent' : undefined;
+  if(next === undefined) delete DATA.attendance[key][swimmerId];
+  else DATA.attendance[key][swimmerId] = next;
+  saveData();
+  renderAttendanceArea();
+  renderStats();
+}
+
+function renderAttendanceArea(){
+  const area = document.getElementById('attendanceArea');
+  const poolId = attPoolSel.value, groupId = attGroupSel.value, ym = attMonthInp.value;
+  if(!poolId || !groupId || !ym){
+    area.innerHTML = '<div class="card"><div class="empty">📅<br>اختر المسبح والفوج والشهر لعرض سجل الحضور</div></div>';
+    return;
+  }
+  const g = groupById(poolId, groupId);
+  const dates = datesForMonthWeekday(ym, g.weekday);
+  let enrolled = DATA.swimmers.filter(s => (s.enrollments||[]).some(e=>e.poolId===poolId && e.groupId===groupId));
+
+  const q = (attSearchInp.value || '').trim();
+  if(q){
+    enrolled = enrolled.filter(s => (s.firstName+' '+s.lastName).includes(q) || (s.guardianPhone||'').includes(q));
+  }
+
+  if(enrolled.length===0){
+    area.innerHTML = q
+      ? `<div class="card"><div class="empty">🔍<br>لا يوجد سباح مطابق لـ"${q}" في ${g.label}</div></div>`
+      : `<div class="card"><div class="empty">🏊<br>لا يوجد سباحون مسجلون في ${g.label}<br><span style="font-size:11.5px">أضف السباح إلى هذا الفوج من بطاقته</span></div></div>`;
+    return;
+  }
+  if(dates.length===0){
+    area.innerHTML = `<div class="card"><div class="empty">لا توجد حصص لهذا الفوج في الشهر المختار</div></div>`;
+    return;
+  }
+
+  let totalPresent=0, totalAbsent=0, totalCells=dates.length*enrolled.length;
+  enrolled.forEach(sw=>{
+    dates.forEach(d=>{
+      const key = `${poolId}|${groupId}|${d}`;
+      const st = DATA.attendance[key] && DATA.attendance[key][sw.id];
+      if(st==='present') totalPresent++;
+      if(st==='absent') totalAbsent++;
+    });
+  });
+
+  let html = `<div class="att-summary">
+    <div><b style="color:var(--green)">${totalPresent}</b><span>✅ حاضر</span></div>
+    <div><b style="color:var(--red)">${totalAbsent}</b><span>❌ غائب</span></div>
+    <div><b>${totalCells}</b><span>المجموع</span></div>
+  </div>`;
+
+  html += `<div class="att-table-wrap"><table class="att"><thead><tr><th class="name">السباح</th>`;
+  dates.forEach(d=>{
+    const day = Number(d.slice(8,10));
+    html += `<th>${day}</th>`;
+  });
+  html += `</tr></thead><tbody>`;
+  enrolled.forEach(sw=>{
+    const pay = paymentInfo(sw);
+    let payHtml = '';
+    if(pay.total>0){
+      if(pay.status==='full') payHtml = `<span class="att-pay" style="color:var(--green)">💰 مدفوع</span>`;
+      else if(pay.status==='partial') payHtml = `<span class="att-pay" style="color:var(--amber)">💰 متبقي ${pay.remaining}</span>`;
+      else payHtml = `<span class="att-pay" style="color:var(--red)">💰 لم يُدفع</span>`;
+    }
+    html += `<tr><td class="name">${sw.lastName||''} ${sw.firstName||''}${payHtml}</td>`;
+    dates.forEach(d=>{
+      const key = `${poolId}|${groupId}|${d}`;
+      const st = DATA.attendance[key] && DATA.attendance[key][sw.id];
+      const cls = st==='present' ? 'present' : st==='absent' ? 'absent' : '';
+      const symbol = st==='present' ? '✓' : st==='absent' ? '✗' : '';
+      html += `<td><button class="att-cell ${cls}" onclick="cycleAttendance('${poolId}','${groupId}','${d}','${sw.id}')">${symbol}</button></td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>
+  <p style="font-size:11.5px; color:var(--muted); margin-top:8px; text-align:center;">اضغط على الخانة: فارغة ← ✅ حاضر ← ❌ غائب ← فارغة</p>`;
+  area.innerHTML = html;
+}
+
+/* ================= SCHEDULE ================= */
+function renderSchedule(){
+  const area = document.getElementById('scheduleArea');
+  area.innerHTML = DATA.pools.map(p=>{
+    const rows = p.groups.map(g=>{
+      const count = DATA.swimmers.filter(s=>(s.enrollments||[]).some(e=>e.poolId===p.id && e.groupId===g.id)).length;
+      return `<div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--line);">
+        <span style="font-size:13px; font-weight:700;">${g.label}</span>
+        <span class="badge pool">${count} سباح</span>
+      </div>`;
+    }).join('');
+    return `<div class="card"><div class="section-title" style="margin-top:0;">🏊 ${p.name}</div>${rows}</div>`;
+  }).join('');
+}
+
+/* ================= REPORTS ================= */
+function renderReports(){
+  const area = document.getElementById('reportsArea');
+  const total = DATA.swimmers.length;
+  const active = DATA.swimmers.filter(s=>subStatus(s)==='active').length;
+  const soon = DATA.swimmers.filter(s=>subStatus(s)==='soon').length;
+  const expired = DATA.swimmers.filter(s=>subStatus(s)==='expired').length;
+
+  let html = `<div class="card"><div class="section-title" style="margin-top:0;">📊 ملخص الاشتراكات</div>
+    <div class="report-grid">
+      <div class="report-card"><b style="color:var(--green)">${active}</b><span>اشتراك نشط</span></div>
+      <div class="report-card"><b style="color:var(--amber)">${soon}</b><span>ينتهي خلال 7 أيام</span></div>
+      <div class="report-card"><b style="color:var(--red)">${expired}</b><span>منتهي الاشتراك</span></div>
+      <div class="report-card"><b>${total}</b><span>مجموع السباحين</span></div>
+    </div></div>`;
+
+  html += `<div class="card"><div class="section-title" style="margin-top:0;">توزيع المسابح</div>`;
+  const maxCount = Math.max(1, ...DATA.pools.map(p=>DATA.swimmers.filter(s=>(s.enrollments||[]).some(e=>e.poolId===p.id)).length));
+  DATA.pools.forEach(p=>{
+    const c = DATA.swimmers.filter(s=>(s.enrollments||[]).some(e=>e.poolId===p.id)).length;
+    html += `<div class="bar-row"><div class="lbl">${p.name.replace('مسبح ','')}</div><div class="bar-track"><div class="bar-fill" style="width:${(c/maxCount*100)||0}%"></div></div><div class="num">${c}</div></div>`;
+  });
+  html += `</div>`;
+
+  const expList = DATA.swimmers.filter(s=>subStatus(s)==='expired');
+  html += `<div class="card"><div class="section-title" style="margin-top:0;">السباحون المنتهية اشتراكاتهم</div>`;
+  html += expList.length ? expList.map(s=>`<div style="padding:7px 0; border-bottom:1px solid var(--line); font-size:13px;">${s.lastName} ${s.firstName} <span style="color:var(--muted); font-size:11.5px;">— انتهى ${s.endDate||''}</span></div>`).join('') : `<div class="empty" style="padding:14px;">لا يوجد</div>`;
+  html += `</div>`;
+
+  const overAbs = DATA.swimmers.filter(s=>absenceCount(s) >= (s.maxAbsences||3));
+  html += `<div class="card"><div class="section-title" style="margin-top:0;">⚠️ السباحون الذين تجاوزوا حد الغيابات</div>`;
+  html += overAbs.length ? overAbs.map(s=>`<div style="padding:7px 0; border-bottom:1px solid var(--line); font-size:13px;">${s.lastName} ${s.firstName} <span style="color:var(--red); font-size:11.5px;">— ${absenceCount(s)}/${s.maxAbsences||3} غياب</span></div>`).join('') : `<div class="empty" style="padding:14px;">لا يوجد</div>`;
+  html += `</div>`;
+
+  area.innerHTML = html;
+}
+
+/* ================= SETTINGS (POOLS & GROUPS) ================= */
+function renderSettings(){
+  const area = document.getElementById('settingsArea');
+  area.innerHTML = DATA.pools.map(p=>{
+    const groupsHtml = p.groups.map(g=>`
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--line);">
+        <span style="font-size:13px; font-weight:700;">${g.label}</span>
+        <div style="display:flex; gap:6px;">
+          <button class="icon-btn" onclick="openGroupModal('${p.id}','${g.id}')">✏️</button>
+          <button class="icon-btn warn" onclick="deleteGroup('${p.id}','${g.id}')">🗑️</button>
+        </div>
+      </div>`).join('') || `<div class="empty" style="padding:10px;">لا يوجد أفواج بعد</div>`;
+    return `<div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div class="section-title" style="margin:0;">🏊 ${p.name}</div>
+        <div style="display:flex; gap:6px;">
+          <button class="icon-btn" onclick="editPoolName('${p.id}')">✏️</button>
+          <button class="icon-btn warn" onclick="deletePool('${p.id}')">🗑️</button>
+        </div>
+      </div>
+      ${groupsHtml}
+      <button class="btn btn-ghost" style="margin-top:10px;" onclick="openGroupModal('${p.id}', null)">➕ إضافة فوج لهذا المسبح</button>
+    </div>`;
+  }).join('');
+}
+
+let editingGroupPoolId = null;
+let editingGroupId = null;
+
+function openGroupModal(poolId, groupId){
+  editingGroupPoolId = poolId;
+  editingGroupId = groupId || null;
+  const g = groupId ? groupById(poolId, groupId) : null;
+  document.getElementById('groupModalTitle').textContent = g ? '✏️ تعديل الفوج' : '➕ إضافة فوج جديد';
+  document.getElementById('g_weekday').value = g ? g.weekday : 3;
+  document.getElementById('g_time').value = g ? (g.time || '10:00') : '10:00';
+  document.getElementById('groupModalOverlay').classList.add('open');
+}
+function closeGroupModal(){
+  document.getElementById('groupModalOverlay').classList.remove('open');
+  editingGroupPoolId = null; editingGroupId = null;
+}
+function saveGroup(){
+  const p = poolById(editingGroupPoolId);
+  if(!p) return;
+  const weekday = parseInt(document.getElementById('g_weekday').value);
+  const time = document.getElementById('g_time').value || '10:00';
+  const label = formatGroupLabel(weekday, time);
+  if(editingGroupId){
+    const g = p.groups.find(x=>x.id===editingGroupId);
+    if(g){ g.weekday = weekday; g.time = time; g.label = label; }
+  } else {
+    p.groups.push({ id: uid(), weekday, time, label });
+  }
+  saveData();
+  closeGroupModal();
+  renderSettings();
+  refreshAttPoolOptions();
+  renderSwimmers();
+  renderPoolChips();
+}
+function deleteGroup(poolId, groupId){
+  const p = poolById(poolId);
+  if(!p) return;
+  const affected = DATA.swimmers.filter(s=>(s.enrollments||[]).some(e=>e.poolId===poolId && e.groupId===groupId)).length;
+  const msg = affected>0 ? `هذا الفوج فيه ${affected} سباح مسجل. حذفه سيلغي تسجيلهم في هذا الفوج (بياناتهم الأخرى تبقى محفوظة). متأكد؟` : 'هل تريد حذف هذا الفوج؟';
+  if(!confirm(msg)) return;
+  p.groups = p.groups.filter(g=>g.id!==groupId);
+  DATA.swimmers.forEach(s=>{ s.enrollments = (s.enrollments||[]).filter(e=>!(e.poolId===poolId && e.groupId===groupId)); });
+  saveData();
+  renderSettings();
+  refreshAttPoolOptions();
+  renderSwimmers();
+  renderPoolChips();
+}
+function addPool(){
+  const name = prompt('اسم المسبح الجديد:');
+  if(!name || !name.trim()) return;
+  DATA.pools.push({ id: uid(), name: name.trim(), groups: [] });
+  saveData();
+  renderSettings();
+  refreshAttPoolOptions();
+  renderPoolChips();
+}
+function editPoolName(poolId){
+  const p = poolById(poolId);
+  if(!p) return;
+  const name = prompt('تعديل اسم المسبح:', p.name);
+  if(!name || !name.trim()) return;
+  p.name = name.trim();
+  saveData();
+  renderSettings();
+  refreshAttPoolOptions();
+  renderSwimmers();
+  renderPoolChips();
+}
+function deletePool(poolId){
+  const p = poolById(poolId);
+  if(!p) return;
+  const affected = DATA.swimmers.filter(s=>(s.enrollments||[]).some(e=>e.poolId===poolId)).length;
+  const msg = affected>0 ? `هذا المسبح فيه ${affected} سباح مسجل. حذفه سيلغي تسجيلهم فيه (بياناتهم الأخرى تبقى محفوظة). متأكد؟` : 'هل تريد حذف هذا المسبح نهائياً؟';
+  if(!confirm(msg)) return;
+  DATA.pools = DATA.pools.filter(x=>x.id!==poolId);
+  DATA.swimmers.forEach(s=>{ s.enrollments = (s.enrollments||[]).filter(e=>e.poolId!==poolId); });
+  if(currentPoolFilter===poolId) currentPoolFilter='all';
+  saveData();
+  renderSettings();
+  refreshAttPoolOptions();
+  renderSwimmers();
+  renderPoolChips();
+}
+
+/* ================= NOTIFICATIONS ================= */
+document.getElementById('bellBtn').addEventListener('click', ()=>{
+  const panel = document.getElementById('notifPanel');
+  const list = [];
+  DATA.swimmers.forEach(s=>{
+    const st = subStatus(s);
+    if(st==='soon') list.push(`⚠️ اشتراك <b>${s.lastName} ${s.firstName}</b> ينتهي بتاريخ ${s.endDate}`);
+    if(st==='expired') list.push(`❌ اشتراك <b>${s.lastName} ${s.firstName}</b> منتهٍ منذ ${Math.abs(daysBetween(todayStr(), s.endDate))} يوم`);
+    const abs = absenceCount(s);
+    if(abs >= (s.maxAbsences||3)) list.push(`🚫 <b>${s.lastName} ${s.firstName}</b> تجاوز حد الغيابات (${abs}/${s.maxAbsences||3})`);
+  });
+  document.getElementById('notifList').innerHTML = list.length ? list.map(t=>`<div class="notif-item">${t}</div>`).join('') : `<div class="empty" style="padding:20px;">لا توجد تنبيهات حالياً</div>`;
+  panel.classList.toggle('open');
+});
+function closeNotif(){ document.getElementById('notifPanel').classList.remove('open'); }
+
+/* ================= QR CARD (per swimmer) ================= */
+let qrCurrentSwimmerId = null;
+function openSwimmerQR(swId){
+  const sw = DATA.swimmers.find(s=>s.id===swId);
+  if(!sw) return;
+  qrCurrentSwimmerId = swId;
+  document.getElementById('qrSwimmerName').textContent = `${sw.lastName||''} ${sw.firstName||''}`;
+  const box = document.getElementById('qrCodeBox');
+  box.innerHTML = '';
+  if(typeof QRCode === 'undefined'){
+    box.innerHTML = '<div class="empty" style="padding:20px;">⚠️ تعذّر تحميل مكتبة QR (تحقق من الاتصال بالإنترنت)</div>';
+  } else {
+    new QRCode(box, { text: 'SWIMID:'+sw.id, width:190, height:190, colorDark:'#1f2233', colorLight:'#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  }
+  document.getElementById('qrModalOverlay').classList.add('open');
+}
+function closeQrModal(){
+  document.getElementById('qrModalOverlay').classList.remove('open');
+  qrCurrentSwimmerId = null;
+}
+function printQrCard(){
+  const sw = DATA.swimmers.find(s=>s.id===qrCurrentSwimmerId);
+  if(!sw) return;
+  const box = document.getElementById('qrCodeBox');
+  const imgEl = box.querySelector('img');
+  const canvasEl = box.querySelector('canvas');
+  const src = imgEl ? imgEl.src : (canvasEl ? canvasEl.toDataURL() : '');
+  if(!src) return;
+  const w = window.open('', '_blank');
+  w.document.write(`<html><head><title>بطاقة ${sw.firstName||''}</title><style>
+    body{font-family:-apple-system,Arial,sans-serif; text-align:center; padding:36px;}
+    h2{margin-bottom:4px;} p{color:#666; font-size:13px; margin-bottom:18px;}
+    img{width:220px; height:220px; border:1px solid #eee; border-radius:12px; padding:10px;}
+  </style></head><body>
+    <h2>🏊 ${sw.lastName||''} ${sw.firstName||''}</h2>
+    <p>نادي السباحة — بطاقة حضور</p>
+    <img src="${src}">
+  </body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(), 300);
+}
+
+/* ================= QR SCAN (mark attendance) ================= */
+let scanStream = null, scanRAF = null, scanLastCode = '', scanLastTime = 0;
+function openScanModal(){
+  if(typeof jsQR === 'undefined'){
+    alert('⚠️ تعذّر تحميل مكتبة المسح (تحقق من الاتصال بالإنترنت) ثم أعد المحاولة.');
+    return;
+  }
+  document.getElementById('scanModalOverlay').classList.add('open');
+  const status = document.getElementById('scanStatus');
+  status.style.color = ''; status.textContent = 'جارٍ فتح الكاميرا...';
+  const card = document.getElementById('scanResultCard');
+  card.classList.remove('show'); card.innerHTML = '';
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }).then(stream=>{
+    scanStream = stream;
+    const video = document.getElementById('scanVideo');
+    video.srcObject = stream;
+    video.play();
+    status.textContent = 'وجّه الكاميرا نحو بطاقة QR الخاصة بالسباح';
+    scanRAF = requestAnimationFrame(scanTick);
+  }).catch(err=>{
+    status.style.color = 'var(--red)';
+    status.textContent = '❌ تعذّر الوصول إلى الكاميرا — تحقق من إذن الكاميرا في المتصفح';
+    console.error(err);
+  });
+}
+function scanTick(){
+  const video = document.getElementById('scanVideo');
+  const canvas = document.getElementById('scanCanvas');
+  if(video && video.readyState === video.HAVE_ENOUGH_DATA){
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imgData.data, imgData.width, imgData.height);
+    if(code && code.data){
+      const now = Date.now();
+      if(code.data !== scanLastCode || now - scanLastTime > 2500){
+        scanLastCode = code.data; scanLastTime = now;
+        handleScannedCode(code.data);
+      }
+    }
+  }
+  scanRAF = requestAnimationFrame(scanTick);
+}
+function handleScannedCode(data){
+  const status = document.getElementById('scanStatus');
+  const card = document.getElementById('scanResultCard');
+  const m = /^SWIMID:(.+)$/.exec((data||'').trim());
+  if(!m){ status.style.color='var(--red)'; status.textContent='⚠️ رمز غير صالح — هذا ليس رمز سباح'; card.classList.remove('show'); return; }
+  const sw = DATA.swimmers.find(s=>s.id===m[1]);
+  if(!sw){ status.style.color='var(--red)'; status.textContent='⚠️ السباح غير موجود في القائمة'; card.classList.remove('show'); return; }
+
+  const e = enrollmentForToday(sw);
+  let groupLine;
+  if(e){
+    const p = poolById(e.poolId);
+    const g = groupById(e.poolId, e.groupId);
+    groupLine = `${p ? p.name.replace('مسبح ','') : '—'} / ${g ? g.name : '—'}`;
+  } else {
+    groupLine = null;
+  }
+
+  const pay = paymentInfo(sw);
+  let payHtml;
+  if(pay.total<=0) payHtml = `<span class="v">—</span>`;
+  else if(pay.status==='full') payHtml = `<span class="v ok">✅ مدفوع بالكامل</span>`;
+  else if(pay.status==='partial') payHtml = `<span class="v warn">⚠️ متبقي ${pay.remaining} DA</span>`;
+  else payHtml = `<span class="v bad">❌ لم يُدفع (${pay.total} DA)</span>`;
+
+  let attHtml;
+  if(!e){
+    attHtml = `<span class="v bad">❌ غير مسجل في فوج</span>`;
+  } else {
+    const key = `${e.poolId}|${e.groupId}|${todayStr()}`;
+    if(!DATA.attendance[key]) DATA.attendance[key] = {};
+    DATA.attendance[key][sw.id] = 'present';
+    saveData();
+    renderSwimmers(); renderStats(); renderAttendanceArea();
+    attHtml = `<span class="v ok">✅ سُجّل الحضور</span>`;
+  }
+
+  card.innerHTML = `
+    <div class="sr-name">🏊 ${sw.lastName||''} ${sw.firstName||''}</div>
+    <div class="sr-row"><span class="k">الفوج</span>${groupLine ? `<span class="v">${groupLine}</span>` : `<span class="v bad">❌ غير مسجل</span>`}</div>
+    <div class="sr-row"><span class="k">الاشتراك المالي</span>${payHtml}</div>
+    <div class="sr-row"><span class="k">الحضور اليوم</span>${attHtml}</div>
+  `;
+  card.classList.add('show');
+
+  if(!e){
+    status.style.color='var(--amber)'; status.textContent=`⚠️ ${sw.firstName||''} غير مسجل في أي فوج`;
+  } else {
+    status.style.color = 'var(--green)';
+    status.textContent = `✅ تم تسجيل حضور: ${sw.lastName||''} ${sw.firstName||''}`;
+  }
+}
+function closeScanModal(){
+  document.getElementById('scanModalOverlay').classList.remove('open');
+  if(scanRAF){ cancelAnimationFrame(scanRAF); scanRAF = null; }
+  if(scanStream){ scanStream.getTracks().forEach(t=>t.stop()); scanStream = null; }
+  document.getElementById('scanStatus').textContent = '';
+  const card = document.getElementById('scanResultCard');
+  if(card){ card.classList.remove('show'); card.innerHTML = ''; }
+  scanLastCode = '';
+}
+
+/* ================= INIT ================= */
+function renderAll(){
+  renderStats();
+  renderPoolChips();
+  renderSwimmers();
+  const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab || 'swimmers';
+  if(activeTab==='schedule') renderSchedule();
+  if(activeTab==='reports') renderReports();
+  if(activeTab==='attendance') renderAttendanceArea();
+  if(activeTab==='settings') renderSettings();
+}
+initAttendanceControls();
+startDataSync();
+
+/* ================= PWA ================= */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
